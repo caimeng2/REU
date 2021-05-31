@@ -1,5 +1,8 @@
 # Human behavior and automated driving features
 
+**Weekly check-ins on Tuesdays (noon-1pm, starting June 8) 
+and Thursdays (11am-noon, starting June 3)**
+
 ### Goal
 
 Learn basic survey data analysis through hands-on experience with the State of the State Survey (SOSS)
