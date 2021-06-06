@@ -1,7 +1,7 @@
 # Human behavior and automated driving features
 
-**Weekly check-ins on Tuesdays (noon-1pm, starting June 8) 
-and Thursdays (11am-noon, starting June 3)**
+*Weekly check-ins on Tuesdays (noon-1pm, starting June 8) 
+and Thursdays (11am-noon, starting June 3)*
 
 ### Goal
 
@@ -9,7 +9,7 @@ Learn basic survey data analysis through hands-on experience with the State of t
 
 ### Schedule
 
-**Week 1** (May 31- June 2): **Identifying relevant variables to include in a model**
+**Week 1** (June 1- June 4): **Identifying relevant variables to include in a model**
 
 Question: 
 
@@ -18,20 +18,28 @@ Question:
 
 Task: 
 
-1.	Review and summarize existing literature on these topics to answer the above questions. e.g. Acceptance of the advanced driver assistance systems applications does not depend on people’s characteristics, including age, driving experience, gender, or frequency of navigation device usage (source: https://www.tandfonline.com/doi/full/10.1080/15472450.2012.716646).
+Review and summarize existing literature on these topics to answer the above questions. e.g. Acceptance of the advanced driver assistance systems applications does not depend on people’s characteristics, including age, driving experience, gender, or frequency of navigation device usage (source: https://www.tandfonline.com/doi/full/10.1080/15472450.2012.716646).
+
+Goal of the week:
+
+Submission of draft write-up of literature (~2000 words) you read and found for this week and the two previous weeks on Overleaf. Remember each paragraph should capture one topic and lead with the main summary of that paragraph
 
 ---
 
-**Week 2** (June 3- 9): **Preparing data for analysis**
+**Week 2** (June 7- 11): **Preparing data for analysis**
 
 Task:
 
 1.	Load and clean the SOSS data; get familiar with it
 2.	Generate a table of sample statistics (with weights preferably)
 
+Goal of the week:
+
+Submission of summary statistics and draft write-up of the table (you always have to summarize in publication of what you are presenting in tables & figures) in Overleaf
+
 ---
 
-**Week 3** (June 10- 16): **Analyzing acceptance of driver assistance technologies**
+**Week 3** (June 14- 18): **Analyzing acceptance of driver assistance technologies**
 
 Question: 
 
@@ -43,9 +51,13 @@ Task:
 1.	Descriptively analyze driving18, driving19, driving20, and driving21 to answer question 1
 2.	Model driving18, driving19, driving20, and driving21 with variables identified in Week 1 to answer question 2 (use logistic regressions or other models that you think make sense)
 
+Goal of the week:
+
+Submission of draft write-up of analysis including graphs in Overleaf
+
 ---
 
-**Week 4** (June 17- 23): **Analyzing driving behavior change due to automated features**
+**Week 4** (June 21- 25): **Analyzing driving behavior change due to automated features**
 
 Question: 
 
@@ -56,15 +68,26 @@ Question:
 
 Task:
 
-1.	Analyze driving22, driving23, driving16, driving17 with similar techniques learned in Week 3 to answer the above questions
+Analyze driving22, driving23, driving16, driving17 with similar techniques learned in Week 3 to answer the above questions
+
+Goal of the week:
+
+Submission of draft write-up of analysis including graphs in Overleaf
 
 ---
 
-**Week 5** (June 24- July 4): **Write-up**
+**Week 5** (June 28- July 2): **Revisions and methodology**
 
 Task: 
 
-1.	Organize and write up findings from previous weeks according to Eva’s paper structure
+1.	Revise write-up of findings from previous weeks
+2.  Write up methodology and include an assessment of limitations in Overleaf
+
+Goal of the week:
+
+1.  Revise and streamline your entire analysis (~1200 words) in Overleaf (no more than four graphs or tables in analysis)
+2.  Submission of draft write-up of methodology including data collection and analysis as well as limitation of both (~500 words)
+
 
 
 
