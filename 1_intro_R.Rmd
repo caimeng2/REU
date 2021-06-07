@@ -1,0 +1,71 @@
+---
+title: "Introduction to R"
+---
+
+This is an RMarkdown file. It mixes code and text. We can compile it into an HTML that contains everything. To compile it, click on “Knit”.
+
+We can execute a chuck of code by `Ctrl+Shift+Enter` (Windows) or `Command+Shift+Enter` (macOS).
+
+See a list of shortcuts [here](https://bookdown.org/yihui/rmarkdown-cookbook/rstudio-shortcuts.html).
+
+## Download R and Rstudio
+
+https://cran.r-project.org/bin/windows/base/ (Windows)
+
+https://cran.r-project.org/bin/macosx/ (macOS)
+
+https://www.rstudio.com/products/rstudio/download/
+
+
+## R basics
+
+Everything is stored as a variable. It's different from SPSS in this respect. We can see all the variables in the "Environment". To assign something to a variable, use `<-`
+```{r}
+result <- 1+1
+```
+To view a variable
+```{r}
+result
+#view(result)
+```
+
+|                    | R  | Python |
+| ------------------ | -- | ------ |
+| Addition           | +  | +      |
+| Subtraction        | -  | -      |
+| Multiplication     | *  | *      |
+| Division           | /  | /      |
+| Exponentiation     | ^  | **     |
+| Variable assignment| <- | =      |
+
+To check data type
+```{r}
+class(result)
+```
+|                    | R         | Python              |
+| ------------------ | --------- | ------------------- |
+| 200                | integer   | int                 |
+| 200.15             | numeric   | float               |
+| TRUE / FALSE       | logical   | bool (True / False) |
+| "lit review"       | character | str                 |
+| To check data type | `class()` | `type()`            |
+
+
+Logical comparison:
+
+|    <  less than
+|    >  greater than
+|    <= less than or equal to
+|    >= greater than or equal to
+|    == equal to
+|    != not equal to
+
+## Load packages
+```{r}
+library(haven) # read data in SPSS, SAS or Stata formats
+library(dplyr) # data wrangling
+library(ggplot2) # plots
+```
+The libraries are loaded successfully if there's no error message. Warnings are usually harmless. Pay attention to the conflicts.
+
+
