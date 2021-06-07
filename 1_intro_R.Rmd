@@ -26,7 +26,7 @@ result <- 1+1
 To view a variable
 ```{r}
 result
-#view(result)
+View(result)
 ```
 
 |                    | R  | Python |
@@ -66,6 +66,139 @@ library(haven) # read data in SPSS, SAS or Stata formats
 library(dplyr) # data wrangling
 library(ggplot2) # plots
 ```
+
 The libraries are loaded successfully if there's no error message. Warnings are usually harmless. Pay attention to the conflicts.
 
+## Import data
+```{r}
+soss <- read_sav("./SOSS81Data.sav")
+```
+```{r}
+#View(soss)
+soss
+```
 
+## Data wrangling
+
+To select columns we need
+```{r}
+df <- soss %>% select(caseid, weight, driving18, driving19, driving20, driving21, driving22a, driving22b, driving22c, driving23a, driving23b, driving23c, driving16, driving17, CD1, age, agecat7, CD5a, races, rac3, educat4, laborforce, inc, X1, X1_t, driving01)
+```
+` %>% ` (`Ctrl+Shift+M` or `Command+Shift+M`) is called "pipe". It chains functions together by passing the left hand side of the operator to the first argument of the right hand side of the operator. In the above chain, `soss` is passed to `select()`, and then the result of that is saved to `df`.
+
+```{r}
+df %>% head()
+```
+
+To select rows
+```{r}
+df %>% filter(age <= 20)
+```
+
+To re-order the dataset
+```{r}
+df %>% arrange(inc) # by income (from less to more)
+#df %>% arrange(desc(inc)) # from more to less
+```
+
+```{r}
+#soss$CD1 %>% attr("labels")
+unique(soss$CD1)
+```
+```{r}
+df %>% count(CD1)
+```
+
+To create a new variable
+```{r}
+df %>% mutate(gender = as.factor(CD1))
+```
+
+```{r}
+df %>% filter(age <= 20) %>% group_by(inc) %>% count()
+#df$inc %>% attr("labels")
+```
+
+## Virtualization
+
+There are several ways to draw plots in R. `base graphics` is built in R. `ggplot2` looks better. `plotly` is gaining popularity.
+
+```{r}
+# base graphics
+plot(driving01 ~ age,data  = df) # hours of driving by age
+```
+```{r}
+hist(df$driving01)
+```
+
+```{r}
+ggplot(data = df) +
+  geom_point(aes(x=age, y=driving01), alpha=0.4)
+```
+
+Notice the warnings. It is because we haven't clean the data properly. Let's ignore it for now.
+
+```{r}
+ggplot(data = df) +
+  geom_jitter(aes(x=age, y=driving01), alpha=0.4)
+```
+```{r}
+ggplot(data = df) +
+  geom_jitter(aes(x=age, y=driving01, color=as.factor(CD1)), alpha=0.7)
+```
+
+```{r}
+ggplot(df) +
+  geom_histogram(aes(x=driving17)) #Interest in owning or leasing an AV
+#unique(df$driving17)
+```
+
+## Clean the SOSS data
+
+```{r}
+#gender: 0=male, 1=female
+df <- df %>% mutate(gender = as.factor(CD1))
+df$gender[df$gender==3] <- NA
+df$gender[df$gender==8] <- NA
+df$gender[df$gender==9] <- NA
+df$gender <- recode(df$gender,`1`= 0, `2`=1)
+
+#age: continuous
+df <- df %>% mutate(age=as.numeric(age))
+#agec:1=18-29, 2=30-39, 3=40-49, 4=50-59, 5=60-69, 6=70-79, 7=80+
+df <- df %>% mutate(agec=as.factor(agecat7))
+```
+## Respondents profile (unweighted)
+
+```{r}
+df %>% group_by(gender) %>% summarize(n=n()) %>% mutate(freq=round((n/sum(n)*100),2))
+```
+
+Or we can write a function
+```{r}
+profile <- function(data,variable){
+  data %>% group_by({{variable}}) %>% summarize(n=n()) %>% mutate(freq=round((n/sum(n)*100),2))
+  }
+```
+```{r}
+profile(df, agec)
+```
+
+To exclude NA 
+```{r}
+df %>% filter(!is.na(agec)) %>%  group_by(agec) %>% summarize(n=n()) %>% mutate(freq=round((n/sum(n)*100),2))
+```
+
+## Respondents profile (weighted)
+
+```{r}
+library(survey)
+```
+
+Documentation: https://cran.r-project.org/web/packages/survey/survey.pdf
+```{r}
+w <- svydesign(ids = ~1, data= df, weights = df$weight)
+```
+```{r}
+data.frame(prop.table(svytable(~agec, design = w)))%>% mutate(n=round(Freq*length(which(!is.na(df$agec)))), percentage=round((Freq*100),2))
+```
