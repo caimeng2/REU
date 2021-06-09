@@ -1,0 +1,179 @@
+---
+title: "Data wrangling and sample statistics"
+---
+```{r}
+library(haven)
+library(dplyr)
+library(survey)
+```
+```{r}
+original <- read_sav("./SOSS81Data.sav")
+#write.csv(original, "soss81_original.csv")
+```
+
+```{r}
+all <- original %>% select(caseid, weight, driving18, driving19, driving20, driving21, driving22a, driving22b, driving22c, driving23a, driving23b, driving23c, driving16, driving17, CD1, age, agecat7, CD5a, races, rac3, educat4, laborforce, inc, X1, X1_t, driving01)
+```
+
+#cleaning
+##demographics
+```{r}
+original$educat4 %>% attr("labels")
+```
+```{r}
+#gender: 0=male, 1=female
+all <- all %>% mutate(gender = as.factor(CD1))
+all$gender[all$gender==3] <- NA
+all$gender[all$gender==8] <- NA
+all$gender[all$gender==9] <- NA
+all$gender <- recode(all$gender,`1`= 0, `2`=1)
+
+#age: continuous
+all <- all %>% mutate(age=as.numeric(age))
+#agec:1=18-29, 2=30-39, 3=40-49, 4=50-59, 5=60-69, 6=70-79, 7=80+
+all <- all %>% mutate(agec=as.factor(agecat7))
+
+#hispanic: 1=yes, 0=No
+all <- all %>% mutate(hispanic=as.factor(CD5a))
+all$hispanic[all$hispanic==8] <-NA #skipped
+all$hispanic[all$hispanic==9] <-NA #not asked
+all$hispanic <- recode(all$hispanic,`5`=0, `1`=1) 
+
+#racec:1=white, 2=Aferican American, 3=other
+all <- all %>% mutate(racec=as.factor(rac3))
+all$racec[all$racec==9] <-NA
+
+#educ: 1=HS or less, 2=some college, 3=college or more
+all <- all %>% mutate(educ=as.factor(educat4))
+all$educ <- recode(all$educ, `2`=1, `3`=2, `4`=3) # combine LT HS and HS
+all$educ <- factor(all$educ)
+
+#emp: 1= in the workforce, 0=not in the workforce
+all <- all %>% mutate(emp=as.factor(laborforce))
+all$emp <- recode(all$emp, `1`=1, `2`=0)
+
+#income: 11 levels treated as continuous
+all <- all %>% mutate(income=as.numeric(inc))
+
+#loc: 1=rural community, 2=small city or town, village, 3= a suburb, 4=urban community
+all <- all %>% mutate(loc=as.factor(X1))
+#code "5" other according to openends
+all$loc[all$X1_t=="Big City"] <- 4
+all$loc[all$X1_t=="Big city"] <- 4
+all$loc[all$X1_t=="Boonies"] <- 1
+all$loc[all$loc==5] <- NA
+all$loc <- factor(all$loc)
+
+#hour (hours spend on driving, ie. driving01)
+all <- all %>% mutate(hour= as.numeric(all$driving01))
+```
+##AV questions
+
+```{r}
+#driving18 (Comfortability with vehicle alarming you of slower moving vehicle)
+#1=Very uncomfortable, 2=Somewhat uncomfortable, 3=Somewhat comfortable, 4=Very comfortable
+all$driving18 <- as.factor(all$driving18)
+all$driving18 <- recode(all$driving18, `4`=1,`3`=2,`2`=3,`1`=4) 
+
+#driving19 (Comfortability with vehicle breaking automatically)
+#1=Very uncomfortable, 2=Somewhat uncomfortable, 3=Somewhat comfortable, 4=Very comfortable
+all$driving19 <- as.factor(all$driving19)
+all$driving19 <- recode(all$driving19, `4`=1,`3`=2,`2`=3,`1`=4) 
+
+#driving20 (Comfortability with adaptive cruise control)
+#1=Very uncomfortable, 2=Somewhat uncomfortable, 3=Somewhat comfortable, 4=Very comfortable
+all$driving20 <- as.factor(all$driving20)
+all$driving20 <- recode(all$driving20, `4`=1,`3`=2,`2`=3,`1`=4) 
+
+#driving21 (Comfortability with vehicle alerting you if you have not used the accelerator)
+#1=Very uncomfortable, 2=Somewhat uncomfortable, 3=Somewhat comfortable, 4=Very comfortable
+all$driving21 <- as.factor(all$driving21)
+all$driving21 <- recode(all$driving21, `4`=1,`3`=2,`2`=3,`1`=4) 
+
+#driving22a (Likelihood to engage in behaviors in vehicles with collision alert -- Use your cell phone while driving)
+#1=less likely, 2=equally likely, 3=more likely
+all$driving22a <- as.factor(all$driving22a)
+all$driving22a[all$driving22a==4] <-NA
+all$driving22a <- recode(all$driving22a, `3`=1,`2`=2,`1`=3) 
+
+#driving22b (Likelihood to engage in behaviors in vehicles with collision alert -- Drink alcohol before you drive)
+#1=less likely, 2=equally likely, 3=more likely
+all$driving22b <- as.factor(all$driving22b)
+all$driving22b[all$driving22b==4] <-NA
+all$driving22b <- recode(all$driving22b, `3`=1,`2`=2,`1`=3) 
+
+#driving22c (Likelihood to engage in behaviors in vehicles with collision alert -- Follow other vehicles more closely or merge more closely in front of other vehicles)
+#1=less likely, 2=equally likely, 3=more likely
+all$driving22c <- as.factor(all$driving22c)
+all$driving22c[all$driving22c==4] <-NA
+all$driving22c <- recode(all$driving22c, `3`=1,`2`=2,`1`=3) 
+
+#driving23a (Likelihood to engage in behaviors in vehicles without collision alert -- Use your cell phone while driving)
+#1=less likely, 2=equally likely, 3=more likely
+all$driving23a <- as.factor(all$driving23a)
+all$driving23a[all$driving23a==4] <-NA
+all$driving23a <- recode(all$driving23a, `3`=1,`2`=2,`1`=3) 
+
+#driving23b (Likelihood to engage in behaviors in vehicles without collision alert -- Drink alcohol before you drive)
+#1=less likely, 2=equally likely, 3=more likely
+all$driving23b <- as.factor(all$driving23b)
+all$driving23b[all$driving23b==4] <-NA
+all$driving23b <- recode(all$driving23b, `3`=1,`2`=2,`1`=3) 
+
+#driving23c (Likelihood to engage in behaviors in vehicles without collision alert -- Follow other vehicles more closely or merge more closely in front of other vehicles)
+#1=less likely, 2=equally likely, 3=more likely
+all$driving23c <- as.factor(all$driving23c)
+all$driving23c[all$driving23c==4] <-NA
+all$driving23c <- recode(all$driving23c, `3`=1,`2`=2,`1`=3) 
+
+#driving16 (Heard of self driving vehicles before today): 1=yes, 0=no
+all$driving16 <- as.factor(all$driving16)
+all$driving16[all$driving16==3] <-NA #Do not know
+all$driving16 <- recode(all$driving16, `1`=1, `2`=0)
+
+#driving17 (Interest in owning or leasing a completely self-driving vehicle in the future)
+#1=Not at all interested, 2=Slightly interested, 3=Moderately interested, 4=Very interested			
+all$driving17 <- as.factor(all$driving17)
+all$driving17[all$driving17==5] <-NA #Do not know
+all$driving17 <- recode(all$driving17, `4`=1,`3`=2,`2`=3,`1`=4) 
+```
+```{r}
+d <- all %>% select(caseid, weight, driving18, driving19, driving20, driving21, driving22a, driving22b, driving22c, driving23a, driving23b, driving23c, driving16, driving17, gender, age, agec, hispanic, racec, educ, emp, income, loc, hour)
+```
+```{r}
+print(colSums(!is.na(d))) #check number of respondents for each question
+```
+
+#respondents profile 
+
+```{r}
+w <- svydesign(ids = ~1, data= d, weights = d$weight)
+```
+
+```{r}
+data.frame(prop.table(svytable(~gender, design = w)))%>% mutate(n=round(Freq*length(which(!is.na(d$gender)))), percentage=round((Freq*100),1))
+```
+```{r}
+data.frame(prop.table(svytable(~agec, design = w)))%>% mutate(n=round(Freq*length(which(!is.na(d$agec)))), percentage=round((Freq*100),1))
+```
+```{r}
+data.frame(prop.table(svytable(~hispanic, design = w)))%>% mutate(n=round(Freq*length(which(!is.na(d$hispanic)))), percentage=round((Freq*100),1))
+```
+```{r}
+data.frame(prop.table(svytable(~racec, design = w)))%>% mutate(n=round(Freq*length(which(!is.na(d$racec)))), percentage=round((Freq*100),1))
+```
+```{r}
+data.frame(prop.table(svytable(~educ, design = w)))%>% mutate(n=round(Freq*length(which(!is.na(d$educ)))), percentage=round((Freq*100),1))
+```
+
+```{r}
+data.frame(prop.table(svytable(~emp, design = w)))%>% mutate(n=round(Freq*length(which(!is.na(d$emp)))), percentage=round((Freq*100),1))
+```
+
+```{r}
+data.frame(prop.table(svytable(~income, design = w)))%>% mutate(n=round(Freq*length(which(!is.na(d$income)))), percentage=round((Freq*100),1))
+```
+
+```{r}
+data.frame(prop.table(svytable(~loc, design = w)))%>% mutate(n=round(Freq*length(which(!is.na(d$loc)))), percentage=round((Freq*100),1))
+```
