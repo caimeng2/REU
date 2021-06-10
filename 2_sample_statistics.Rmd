@@ -177,3 +177,7 @@ data.frame(prop.table(svytable(~income, design = w)))%>% mutate(n=round(Freq*len
 ```{r}
 data.frame(prop.table(svytable(~loc, design = w)))%>% mutate(n=round(Freq*length(which(!is.na(d$loc)))), percentage=round((Freq*100),1))
 ```
+```{r}
+#write.csv(d, "SOSS81_clean.csv",row.names=FALSE)
+```
+
