@@ -1,0 +1,118 @@
+---
+title: "Descriptives and Regressions"
+---
+```{r}
+options(scipen=16)
+library(dplyr)
+library(ggplot2)
+library(scales)
+library(survey)
+```
+
+```{r}
+d <- read.csv("SOSS81_clean.csv") # data from last week
+w <- svydesign(ids = ~1, data= d, weights = d$weight) #define the survey design object
+```
+
+## How comfortable are Michiganders with driver assistance technologies?
+
+### Warning about an object or a slower moving vehicle
+```{r}
+# create the pencentage labels
+driving18 <- data.frame(prop.table(svytable(~driving18, design = w))) %>% mutate(n=Freq*length(which(!is.na(d$driving18)))) %>% mutate(label=percent(Freq, accuracy = 0.1)) %>% mutate(pct=Freq*100)
+
+# visualize distribution
+ggplot(driving18)+
+  geom_bar(aes(x=driving18, y = pct), fill="grey60", stat="identity")+
+  theme_minimal()+
+  guides(fill=FALSE)+
+  theme(panel.grid.major.x = element_blank())+
+  scale_x_discrete(name="", labels=c("1"="Very uncomfortable", "2"="Somewhat uncomfortable", "3"="Somewhat comfortable", "4"="Very comfortable"))+
+  scale_y_continuous(name="Percentage of respondents")+
+  ggtitle("How comfortable would you be with your vehicle providing you with an alarm \nor warning about an object or a slower moving vehicle in front of you?")+
+  geom_text(aes(x=driving18, y=pct, label=label), vjust= -0.3)
+```
+
+## Are there any differences in Michiganders’ comfortability with driver assistance technologies among different demographics?
+
+Let's look at bivariate analysis. "Bivariate" means two variables - an outcome/dependent variable and an independent variable. An outcome variable is what we aim to study/measure by changing independent variables. An independent variable refers to a factor that does not change with other variables. In our case, the outcome/dependent variable is the level of comfort respondents have with each of the driver assistance technologies. An independent variable would be a socio-demographic factor. We use bivarite models to find patterns (not causal implications). In other words, we are interested in the association between two variables. The most common way of checking patterns is to draw a scatter plot.
+
+### Does respondents' level of comfort in their cars warning about an object or a slower moving vehicle differ with age?
+```{r}
+d %>% filter(!is.na(age)) %>% filter(!is.na(driving18)) %>% 
+ggplot()+
+  #geom_point(aes(x=age, y=driving18))
+  geom_jitter(aes(x=age, y=driving18), alpha=0.4) #to handle overlapping points - add small random variation to each point & set transparency
+```
+
+Let's build a model to quantify the difference. Because the dependent variable is ordinal (i.e. categories with order), we use ordinal logistic regression. In a logistic regression, the log odds of the dependent variable is modeled as a linear function of the independent variables.
+
+To learn more about different types of variables, check [here](https://stats.idre.ucla.edu/other/mult-pkg/whatstat/what-is-the-difference-between-categorical-ordinal-and-interval-variables/).
+
+To learn more about logistic regressions, check [here](https://stats.idre.ucla.edu/r/dae/logit-regression/).
+
+```{r}
+# a bivarite logistic regression model
+model <- svyolr(as.factor(driving18) ~ age, design = w)
+summary(model)
+nobs(model) # number of respondents
+
+# to calculate p value
+st <- coef(summary(model))
+pval <- pnorm(abs(st[, "t value"]),lower.tail = FALSE)* 2
+st <- cbind(st, "p value" = round(pval,4))
+st
+```
+
+Notice the p-value of age is 0.2698. It's above the threshold of 0.05 (95 percent confidence interval), meaning there's no stistically significant difference.
+
+If you are interested to learn more about ordinal logistic regression, check this [article](https://stats.idre.ucla.edu/r/dae/ordinal-logistic-regression/).
+
+```{r}
+# check respondents' answers
+svyby(~as.numeric(driving18), ~as.factor(agec), w, svymean, na.rm=T)
+#agec:1=18-29, 2=30-39, 3=40-49, 4=50-59, 5=60-69, 6=70-79, 7=80+
+```
+
+### Does respondents' level of comfort in their cars warning about an object or a slower moving vehicle differ with gender?
+
+We need dummy variables here because gender is a categorical variable while regressions deal with numerical relationships. A dummy variable uses numeric values to represent categorical data. For example, 0 is male, 1 is female. Or 1 is Caucasian, 2 is African American, and 3 is other. It's called "dummy" because it doesn't make sense to interpret that as other races is three times as Caucasians. The coefficient on gender1 means the effect of being female (compared to male) has on the outcome variable.
+
+```{r}
+model <- svyolr(as.factor(driving18) ~ as.factor(gender), design = w)
+summary(model)
+nobs(model)
+st <- coef(summary(model))
+pval <- pnorm(abs(st[, "t value"]),lower.tail = FALSE)* 2
+st <- cbind(st, "p value" = round(pval,4))
+st
+```
+
+```{r}
+svyby(~as.numeric(driving18), ~as.factor(gender), w, svymean, na.rm=T)
+#0=male, 1=female
+```
+
+Let's look at multiple regression analysis. "Multiple" means two or more independent variables. For example, we can study whether respondents' level of comfort is associated with age and gender. The interpretation would be controlling for age, female are more likely to be ... than male. And controlling for gender, older respondents are more likely to be ... than younger generations (if there is any statistically significant difference). In a multiple regression, covatiates are being held at the means for continuous variables (e.g. age at the average) and the reference levels for categorical variables (e.g. gender at 0). Technically we can throw everything into a multiple regression but we should not. To choose what variables to inclue, we need to have theoretical foundations.
+
+Question: what did you find in the literature?
+```{r}
+model <- svyolr(as.factor(driving18) ~ as.factor(gender)+age+as.factor(educ)+as.factor(emp)+income+hour, design = w)
+summary(model)
+nobs(model) 
+st <- coef(summary(model))
+pval <- pnorm(abs(st[, "t value"]),lower.tail = FALSE)* 2
+st <- cbind(st, "p value" = round(pval,4))
+st
+```
+```{r}
+svyby(~as.numeric(driving18), ~as.factor(emp), w, svymean, na.rm=T)
+```
+```{r}
+# check the oddds ratio
+round(exp(coef(model)), 2)
+```
+
+Respondents who are in the labor force are less likely to be comfortable with their vehicles alarming them of slower moving vehicle than those who are not in the labor force. **Intrepreting the coefficient -0.415656784**: When holding gender, age, education, income, and hours spend on driving constant, one unit increse in employment (i.e. from 0 to 1) leads to a 0.42 decrease in the expected value of driving18 on the log odds scale. **Intrepreting the odds ratio 0.66**: The odds of a respondent who are in the labor force being more comfortable with alarming slower moving vehicles is 66% that of a respondent who are not in the labor force, holding constant all other variables.
+
+If you'd like to know more about odds ratio, check this  [article](https://stats.idre.ucla.edu/other/mult-pkg/faq/general/faq-how-do-i-interpret-odds-ratios-in-logistic-regression/).
