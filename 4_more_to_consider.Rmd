@@ -1,0 +1,131 @@
+---
+title: "More to consider for publication"
+---
+
+```{r}
+options(scipen=16)
+library(dplyr)
+library(ggplot2)
+library(scales)
+library(survey)
+library(tidyverse)
+```
+
+```{r}
+d <- read.csv("SOSS81_clean.csv")
+w <- svydesign(ids = ~1, data= d, weights = d$weight) 
+```
+
+### Is respondents' level of comfort associated with familarity with technologies?
+
+In this dataset, we can use heard of AVs as an indicator/ proxy of familarity with technologies.
+```{r}
+#Heard of self driving vehicles before today: 1=yes, 0=no
+driving16 <- data.frame(prop.table(svytable(~driving16, design = w))) %>% mutate(n=Freq*length(which(!is.na(d$driving16)))) %>% mutate(label=percent(Freq, accuracy = 0.1)) %>% mutate(pct=Freq*100) 
+
+#check distribution
+ggplot(driving16)+
+  geom_bar(aes(x=driving16, y = pct), fill="grey", stat="identity")+
+  theme_minimal()+
+  guides(fill=FALSE)+
+  theme(panel.grid.major.x = element_blank())+
+  scale_x_discrete(name="", labels=c("1"="Yes", "0"="No"))+
+  scale_y_continuous(name="Percentage of respondents")+
+  ggtitle("Have you heard of self-driving vehicles before today?")+
+  geom_text(aes(x=driving16, y=pct, label=label), vjust= -0.3)
+```
+```{r}
+#simple regression (no control variables)
+summary(model <- svyolr(as.factor(driving18) ~ as.factor(driving16), design = w))
+nobs(model)
+st <- coef(summary(model))
+pval <- pnorm(abs(st[, "t value"]),lower.tail = FALSE)* 2
+st <- cbind(st, "p value" = round(pval,4))
+st
+```
+```{r}
+#multiple regression
+model <- svyolr(as.factor(driving18) ~ as.factor(gender)+age+as.factor(educ)+as.factor(emp)+income+hour+as.factor(driving16), design = w)
+#model <- svyolr(as.factor(driving18) ~ as.factor(gender)+age+as.factor(emp)+income, design = w)
+summary(model)
+nobs(model) 
+st <- coef(summary(model))
+pval <- pnorm(abs(st[, "t value"]),lower.tail = FALSE)* 2
+st <- cbind(st, "p value" = round(pval,4))
+st
+```
+
+For publication, we need to decide on whether to use simple (i.e. bivariate, one independent variable) or multiple  regression (i.e. many independent variables). Either is fine but need to be consistent. Simple regressions are more common for exploratory analysis. Multiple regressions allow us to see the unique effect that each independent variable has on the outcome variable, even if the independent variables are correlated. (We need to think about what's in the literature, the research questions, and the hypothesis.)
+
+### One plot of response distribution
+
+```{r}
+#combine into one dataframe
+driving18 <- data.frame(prop.table(svytable(~driving18, design = w))) %>% mutate(n=Freq*length(which(!is.na(d$driving18)))) %>% mutate(label=percent(Freq, accuracy = 0.1)) %>% mutate(pct=Freq*100)%>% add_column(tech="Warning about slower moving vehicles") %>% mutate(comfort =driving18)
+driving19 <- data.frame(prop.table(svytable(~driving19, design = w))) %>% mutate(n=Freq*length(which(!is.na(d$driving19)))) %>% mutate(label=percent(Freq, accuracy = 0.1)) %>% mutate(pct=Freq*100)%>% add_column(tech="Braking automatically") %>% mutate(comfort=driving19)
+driving20 <- data.frame(prop.table(svytable(~driving20, design = w))) %>% mutate(n=Freq*length(which(!is.na(d$driving20)))) %>% mutate(label=percent(Freq, accuracy = 0.1)) %>% mutate(pct=Freq*100)%>% add_column(tech="Adaptive cruise control") %>% mutate(comfort=driving20)
+driving21 <- data.frame(prop.table(svytable(~driving21, design = w))) %>% mutate(n=Freq*length(which(!is.na(d$driving21)))) %>% mutate(label=percent(Freq, accuracy = 0.1)) %>% mutate(pct=Freq*100)%>% add_column(tech="Warning about distracted driving") %>% mutate(comfort=driving21)
+
+alltech <- bind_rows(driving18, driving19, driving20, driving21)
+```
+```{r}
+mycolor_grey = c("grey45",  "grey60", "grey75", "grey90")
+ggplot(alltech)+
+  geom_bar(aes(x=factor(tech, levels = c("Braking automatically", "Adaptive cruise control","Warning about distracted driving","Warning about slower moving vehicles")),y=pct, fill=factor(comfort, levels = c(4,3,2,1))),stat="identity", position = "stack")+
+  theme_minimal()+
+  theme(panel.grid.major.x = element_blank(), legend.position = c(0.3, -0.2), legend.direction ="horizontal", plot.margin= grid::unit(c(0.1,0.1,2,0.1), "lines"))+
+  scale_fill_manual(name="", values = mycolor_grey,labels=c("1"="Very uncomfortable", "2"="Somewhat uncomfortable", "3"="Somewhat comfortable", "4"="Very comfortable"), guide = guide_legend(reverse = TRUE))+
+  scale_x_discrete(name="")+
+  scale_y_continuous(name="Percentage of respondents")+
+  geom_text(aes(x=factor(tech),y = pct, label= label),size = 2.5, position = position_stack(vjust = 0.5))+
+  ggtitle("")+
+  coord_flip()
+```
+
+```{r}
+#save the plot
+#ggsave("driving18_21.png", width = 8, height = 4)
+```
+```{r}
+#check the number of respondents
+colSums(!is.na(d))
+```
+It is usually good practice to include the number of respondents as a note under a plot.
+
+Notice that driving22 and driving23 have poor response rate.
+
+```{r}
+d_nona <- d %>% select(caseid, weight, driving18, driving19, driving20, driving21, gender, age, agec, emp) %>% na.omit()
+```
+
+
+### Comparison between different techs
+
+Let's consider this question: does respondents' level of comfort regarding driver assistance technologies differ by different types of technologies? 
+
+Judging by the bar plot above, the answer is yes. We can quantify the difference by a model as before. Not like previous regression, here the variable of interest (level of comfort) is spread out across columns (driving18-21). So we need to reformat the data such that "level of comfort" are gathered together as one single variable (I call it "comfort").  
+```{r}
+# reshape wide format to long format
+d_gather <- d %>% pivot_longer(c(driving18, driving19, driving20, driving21,), names_to = "tech", values_to = "comfort")
+w_gather <- svydesign(ids = ~1, data= d_gather, weights = d_gather$weight) # the new survey design object
+```
+
+```{r}
+# pick a tech as base
+summary(model <- svyolr(as.factor(comfort) ~ relevel(as.factor(tech), ref="driving19"), design = w_gather))
+st <- coef(summary(model))
+pval <- pnorm(abs(st[, "t value"]),lower.tail = FALSE)* 2
+st <- cbind(st, "p value" = round(pval,4))
+st
+```
+
+```{r}
+svyby(~as.numeric(comfort), ~as.factor(tech), w_gather, svymean, na.rm=T)
+```
+```{r}
+# check the oddds ratio
+round(exp(coef(model)), 2)
+```
+Compared to automatic braking (driving19), respondents are stasistically significantly more likely to be comfortable with warning about a slower moving vehicle (driving18) - the odds is 2.41 times of being comfort with automatic breaking.
+
+If you'd like to see how to report model estimates or an example of write-up, [here](https://www.sciencedirect.com/science/article/pii/S0965856420305929) is a paper we wrote also using the SOSS data.
