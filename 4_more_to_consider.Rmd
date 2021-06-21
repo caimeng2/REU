@@ -57,6 +57,32 @@ st
 
 For publication, we need to decide on whether to use simple (i.e. bivariate, one independent variable) or multiple  regression (i.e. many independent variables). Either is fine but need to be consistent. Simple regressions are more common for exploratory analysis. Multiple regressions allow us to see the unique effect that each independent variable has on the outcome variable, even if the independent variables are correlated. (We need to think about what's in the literature, the research questions, and the hypothesis.)
 
+Note on laborforce(i.e. emp): "In the labor force" include unemployed, looking for work
+
+>This is the SPSS Syntax:
+Compute laborforce=-9.
+If (CD15 lt 7 or cd15=11)laborforce=1.
+If (cd15 ge 7 and cd15 lt 11)laborforce=2.
+Missing values laborforce (-9).
+Value labels laborforce 1 'In the labor force'    2 'Not in labor force'.
+Variable labels laborforce 'Is respondent in the labor force or not'.
+
+>Which translates to:
+laborforce=1 In the labor force === CD15=1  WORK FULL TIME
+laborforce=1 In the labor force === CD15=2  WORK PART TIME
+laborforce=1 In the labor force === CD15=3  WORK AND GO TO SCHOOL
+laborforce=1 In the labor force === CD15=4  THE ARMED FORCES
+laborforce=1 In the labor force === CD15=5  HAVE A JOB, BUT NOT AT WORK LAST WEEK (ON VAC, SICK LEAVE, ETC)
+**laborforce=1 In the labor force === CD15=6  UNEMPLOYED, LAID OFF, LOOKING FOR WORK**
+laborforce=2 Not in labor force === CD15=7  RETIRED
+laborforce=2 Not in labor force === CD15=8  SCHOOL FULL TIME
+laborforce=2 Not in labor force === CD15=9  HOMEMAKER
+laborforce=2 Not in labor force === CD15=10  DISABLED
+laborforce=1 In the labor force === CD15=11  SEMI-RETIRED, RETIRED AND WORKING PART-TIME
+laborforce=-9 (Missing) === CD15=95  MISC/OTHER
+laborforce=-9 (Missing) === CD15=99  REFUSED
+
+
 ### One plot of response distribution
 
 ```{r}
