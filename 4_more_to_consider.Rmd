@@ -43,10 +43,10 @@ pval <- pnorm(abs(st[, "t value"]),lower.tail = FALSE)* 2
 st <- cbind(st, "p value" = round(pval,4))
 st
 ```
+
 ```{r}
 #multiple regression
 model <- svyolr(as.factor(driving18) ~ as.factor(gender)+age+as.factor(educ)+as.factor(emp)+income+hour+as.factor(driving16), design = w)
-#model <- svyolr(as.factor(driving18) ~ as.factor(gender)+age+as.factor(emp)+income, design = w)
 summary(model)
 nobs(model) 
 st <- coef(summary(model))
@@ -120,10 +120,6 @@ It is usually good practice to include the number of respondents as a note under
 
 Notice that driving22 and driving23 have poor response rate.
 
-```{r}
-d_nona <- d %>% select(caseid, weight, driving18, driving19, driving20, driving21, gender, age, agec, emp) %>% na.omit()
-```
-
 
 ### Comparison between different techs
 
@@ -155,3 +151,10 @@ round(exp(coef(model)), 2)
 Compared to automatic braking (driving19), respondents are stasistically significantly more likely to be comfortable with warning about a slower moving vehicle (driving18) - the odds is 2.41 times of being comfort with automatic breaking.
 
 If you'd like to see how to report model estimates or an example of write-up, [here](https://www.sciencedirect.com/science/article/pii/S0965856420305929) is a paper we wrote also using the SOSS data.
+
+### Binomial logistic regression (with weights)
+
+```{r}
+summary(model <- svyglm(as.factor(driving16) ~ as.factor(gender), design = w, family=binomial(logit)))
+```
+
